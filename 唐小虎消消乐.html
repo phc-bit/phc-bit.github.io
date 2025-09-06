@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>萌萌唐小虎消消乐</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Marker Felt', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-container::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 150px;
+            height: 150px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23FFD700" opacity="0.3"/></svg>');
+            z-index: 0;
+        }
+        
+        .game-container::after {
+            content: "";
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23FF69B4" opacity="0.3"/></svg>');
+            z-index: 0;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            font-size: 2.8rem;
+            text-shadow: 3px 3px 0 #ffd166;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            background: #fff5e6;
+            padding: 15px 25px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .score-container, .moves-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .label {
+            font-size: 1.1rem;
+            color: #ff9a76;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .score, .moves {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            background: white;
+            padding: 5px 20px;
+            border-radius: 15px;
+            min-width: 120px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            background: #ffd3b6;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cell {
+            aspect-ratio: 1/1;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .cell.selected {
+            transform: scale(0.9);
+            box-shadow: 0 0 0 4px #ff6b6b;
+        }
+        
+        .animal {
+            width: 85%;
+            height: 85%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: all 0.3s ease;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #restart {
+            background: linear-gradient(to right, #ff9a9e, #fad0c4);
+            color: white;
+        }
+        
+        #hint {
+            background: linear-gradient(to right, #a1c4fd, #c2e9fb);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        
+        .game-over.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 30px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.5s ease;
+        }
+        
+        .game-over.show .result-card {
+            transform: scale(1);
+        }
+        
+        .result-card h2 {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 #ffd166;
+        }
+        
+        .final-score {
+            font-size: 4rem;
+            color: #ff6b6b;
+            font-weight: bold;
+            margin: 30px 0;
+            text-shadow: 3px 3px 0 #ffd166;
+        }
+        
+        .message {
+            font-size: 1.5rem;
+            color: #5a5a5a;
+            margin-bottom: 30px;
+        }
+        
+        .play-again {
+            background: linear-gradient(to right, #ff9a9e, #fad0c4);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .play-again:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .animal-1 { background-color: #ff9a9e; }
+        .animal-2 { background-color: #a1c4fd; }
+        .animal-3 { background-color: #c2e9fb; }
+        .animal-4 { background-color: #d4fc79; }
+        .animal-5 { background-color: #ffd3b6; }
+        .animal-6 { background-color: #ffaaa7; }
+        
+        /* 小动物图案使用自制圆圆虎 */
+        .animal::before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .animal-1::before { background-image: url('圆圆虎1.png'); }
+        .animal-2::before { background-image: url('圆圆虎2.png'); }
+        .animal-3::before { background-image: url('圆圆虎3.png'); }
+        .animal-4::before { background-image: url('圆圆虎4.png'); }
+        .animal-5::before { background-image: url('圆圆虎5.png'); }
+        .animal-6::before { background-image: url('小虎透明.png'); }
+        
+        @media (max-width: 600px) {
+            .game-board {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 5px;
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .score, .moves {
+                font-size: 1.8rem;
+                min-width: 100px;
+            }
+            
+            button {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1><i class="fas fa-paw"></i> 萌萌唐小虎消消乐 <i class="fas fa-paw"></i></h1>
+            <p>点击相同的圆圆唐小虎，三个或以上连成一线即可消除！</p>
+        </header>
+        
+        <div class="game-info">
+            <div class="score-container">
+                <div class="label">得分</div>
+                <div class="score" id="score">0</div>
+            </div>
+            <div class="moves-container">
+                <div class="label">剩余步数</div>
+                <div class="moves" id="moves">30</div>
+            </div>
+        </div>
+        
+        <div class="game-board" id="game-board"></div>
+        
+        <div class="controls">
+            <button id="restart"><i class="fas fa-redo"></i> 重新开始</button>
+            <button id="hint"><i class="fas fa-lightbulb"></i> 提示</button>
+        </div>
+    </div>
+    
+    <div class="game-over" id="game-over">
+        <div class="result-card">
+            <h2>游戏结束!</h2>
+            <div class="message">你太棒了！继续加油哦~</div>
+            <div class="final-score" id="final-score">0</div>
+            <button class="play-again" id="play-again"><i class="fas fa-play-circle"></i> 再玩一次</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 游戏配置
+            const BOARD_SIZE = 8;
+            const ANIMAL_TYPES = 6;
+            const INITIAL_MOVES = 30;
+            
+            // 游戏状态
+            let board = [];
+            let score = 0;
+            let moves = INITIAL_MOVES;
+            let selectedCell = null;
+            let gameActive = true;
+            
+            // DOM 元素
+            const gameBoard = document.getElementById('game-board');
+            const scoreElement = document.getElementById('score');
+            const movesElement = document.getElementById('moves');
+            const restartButton = document.getElementById('restart');
+            const hintButton = document.getElementById('hint');
+            const gameOverScreen = document.getElementById('game-over');
+            const finalScoreElement = document.getElementById('final-score');
+            const playAgainButton = document.getElementById('play-again');
+            
+            // 初始化游戏
+            function initGame() {
+                // 重置状态
+                board = [];
+                score = 0;
+                moves = INITIAL_MOVES;
+                selectedCell = null;
+                gameActive = true;
+                
+                // 更新UI
+                scoreElement.textContent = score;
+                movesElement.textContent = moves;
+                gameOverScreen.classList.remove('show');
+                
+                // 清空游戏板
+                gameBoard.innerHTML = '';
+                
+                // 创建游戏板
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    board[row] = [];
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        // 随机生成动物类型 (1-6)
+                        const animalType = Math.floor(Math.random() * ANIMAL_TYPES) + 1;
+                        board[row][col] = animalType;
+                        
+                        // 创建单元格
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        
+                        // 创建动物元素
+                        const animal = document.createElement('div');
+                        animal.className = `animal animal-${animalType}`;
+                        cell.appendChild(animal);
+                        
+                        // 添加点击事件
+                        cell.addEventListener('click', () => handleCellClick(row, col));
+                        
+                        gameBoard.appendChild(cell);
+                    }
+                }
+                
+                // 确保初始状态没有可消除的组合
+                while (findMatches().length > 0) {
+                    resetBoard();
+                }
+            }
+            
+            // 重置游戏板（当初始状态有匹配时）
+            function resetBoard() {
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        const animalType = Math.floor(Math.random() * ANIMAL_TYPES) + 1;
+                        board[row][col] = animalType;
+                        
+                        const cell = gameBoard.children[row * BOARD_SIZE + col];
+                        const animal = cell.querySelector('.animal');
+                        animal.className = `animal animal-${animalType}`;
+                    }
+                }
+            }
+            
+            // 处理单元格点击
+            function handleCellClick(row, col) {
+                if (!gameActive) return;
+                
+                const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                
+                // 如果没有选中的单元格，选中当前单元格
+                if (!selectedCell) {
+                    selectedCell = { row, col };
+                    cell.classList.add('selected');
+                    return;
+                }
+                
+                // 如果点击的是已选中的单元格，取消选择
+                if (selectedCell.row === row && selectedCell.col === col) {
+                    selectedCell = null;
+                    cell.classList.remove('selected');
+                    return;
+                }
+                
+                // 检查是否相邻
+                const isAdjacent = 
+                    (Math.abs(selectedCell.row - row) === 1 && selectedCell.col === col) ||
+                    (Math.abs(selectedCell.col - col) === 1 && selectedCell.row === row);
+                
+                if (!isAdjacent) {
+                    // 取消之前的选择
+                    document.querySelector('.cell.selected').classList.remove('selected');
+                    // 选择新的单元格
+                    selectedCell = { row, col };
+                    cell.classList.add('selected');
+                    return;
+                }
+                
+                // 交换动物
+                swapAnimals(selectedCell.row, selectedCell.col, row, col);
+                
+                // 取消选择
+                document.querySelector('.cell.selected').classList.remove('selected');
+                selectedCell = null;
+            }
+            
+            // 交换两个位置的动物
+            function swapAnimals(row1, col1, row2, col2) {
+                // 交换数组中的值
+                [board[row1][col1], board[row2][col2]] = [board[row2][col2], board[row1][col1]];
+                
+                // 更新UI
+                updateCell(row1, col1);
+                updateCell(row2, col2);
+                
+                // 检查是否有匹配
+                const matches = findMatches();
+                
+                if (matches.length > 0) {
+                    // 有匹配，消除并计分
+                    processMatches(matches);
+                    moves--;
+                    movesElement.textContent = moves;
+                    
+                    // 检查游戏是否结束
+                    if (moves <= 0) {
+                        endGame();
+                    }
+                } else {
+                    // 没有匹配，交换回来
+                    [board[row1][col1], board[row2][col2]] = [board[row2][col2], board[row1][col1]];
+                    updateCell(row1, col1);
+                    updateCell(row2, col2);
+                }
+            }
+            
+            // 更新单元格显示
+            function updateCell(row, col) {
+                const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                const animal = cell.querySelector('.animal');
+                animal.className = `animal animal-${board[row][col]}`;
+            }
+            
+            // 查找所有匹配
+            function findMatches() {
+                const matches = [];
+                
+                // 检查水平匹配
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE - 2; col++) {
+                        const animalType = board[row][col];
+                        if (animalType !== 0 && 
+                            animalType === board[row][col + 1] && 
+                            animalType === board[row][col + 2]) {
+                            
+                            // 找到匹配的起点，检查长度
+                            let matchLength = 3;
+                            while (col + matchLength < BOARD_SIZE && 
+                                   board[row][col + matchLength] === animalType) {
+                                matchLength++;
+                            }
+                            
+                            // 添加匹配项
+                            for (let i = 0; i < matchLength; i++) {
+                                matches.push({ row, col: col + i });
+                            }
+                            
+                            // 跳过已匹配的部分
+                            col += matchLength - 1;
+                        }
+                    }
+                }
+                
+                // 检查垂直匹配
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    for (let row = 0; row < BOARD_SIZE - 2; row++) {
+                        const animalType = board[row][col];
+                        if (animalType !== 0 && 
+                            animalType === board[row + 1][col] && 
+                            animalType === board[row + 2][col]) {
+                            
+                            // 找到匹配的起点，检查长度
+                            let matchLength = 3;
+                            while (row + matchLength < BOARD_SIZE && 
+                                   board[row + matchLength][col] === animalType) {
+                                matchLength++;
+                            }
+                            
+                            // 添加匹配项
+                            for (let i = 0; i < matchLength; i++) {
+                                matches.push({ row: row + i, col });
+                            }
+                            
+                            // 跳过已匹配的部分
+                            row += matchLength - 1;
+                        }
+                    }
+                }
+                
+                return matches;
+            }
+            
+            // 处理匹配项
+            function processMatches(matches) {
+                // 计算得分 (每消除一个动物得10分)
+                const points = matches.length * 10;
+                score += points;
+                scoreElement.textContent = score;
+                
+                // 添加得分动画
+                const scoreAnim = document.createElement('div');
+                scoreAnim.className = 'score-animation';
+                scoreAnim.textContent = `+${points}`;
+                scoreAnim.style.position = 'absolute';
+                scoreAnim.style.color = '#ff6b6b';
+                scoreAnim.style.fontSize = '2rem';
+                scoreAnim.style.fontWeight = 'bold';
+                scoreAnim.style.animation = 'floatUp 1s forwards';
+                
+                document.querySelector('.game-info').appendChild(scoreAnim);
+                
+                setTimeout(() => {
+                    scoreAnim.remove();
+                }, 1000);
+                
+                // 消除匹配的动物
+                matches.forEach(match => {
+                    board[match.row][match.col] = 0;
+                    const cell = document.querySelector(`.cell[data-row="${match.row}"][data-col="${match.col}"]`);
+                
+                });
+                
+                // 延迟后下落新动物
+                setTimeout(() => {
+                    dropAnimals();
+                    refillBoard();
+                    
+                    // 检查是否有新的匹配
+                    const newMatches = findMatches();
+                    if (newMatches.length > 0) {
+                        processMatches(newMatches);
+                    }
+                }, 500);
+            }
+            
+            // 动物下落
+            function dropAnimals() {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    let emptySpaces = 0;
+                    
+                    // 从底部向上遍历
+                    for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                        if (board[row][col] === 0) {
+                            emptySpaces++;
+                        } else if (emptySpaces > 0) {
+                            // 移动动物
+                            board[row + emptySpaces][col] = board[row][col];
+                            board[row][col] = 0;
+                            updateCell(row + emptySpaces, col);
+                            updateCell(row, col);
+                        }
+                    }
+                }
+            }
+            
+            // 填充空白
+            function refillBoard() {
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        if (board[row][col] === 0) {
+                            // 生成新动物
+                            const animalType = Math.floor(Math.random() * ANIMAL_TYPES) + 1;
+                            board[row][col] = animalType;
+                            updateCell(row, col);
+                        }
+                    }
+                }
+            }
+            
+            // 游戏结束
+            function endGame() {
+                gameActive = false;
+                finalScoreElement.textContent = score;
+                setTimeout(() => {
+                    gameOverScreen.classList.add('show');
+                }, 500);
+            }
+            
+            // 提示功能
+            function showHint() {
+                if (!gameActive || moves <= 0) return;
+                
+                // 简单实现：随机选择一个有效移动
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        // 检查右侧交换
+                        if (col < BOARD_SIZE - 1) {
+                            // 交换
+                            [board[row][col], board[row][col + 1]] = [board[row][col + 1], board[row][col]];
+                            
+                            // 检查是否有匹配
+                            const matches = findMatches();
+                            
+                            // 交换回来
+                            [board[row][col], board[row][col + 1]] = [board[row][col + 1], board[row][col]];
+                            
+                            if (matches.length > 0) {
+                                // 高亮提示的单元格
+                                const cell1 = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                                const cell2 = document.querySelector(`.cell[data-row="${row}"][data-col="${col + 1}"]`);
+                                
+                                cell1.style.boxShadow = '0 0 0 4px #42b883';
+                                cell2.style.boxShadow = '0 0 0 4px #42b883';
+                                
+                                setTimeout(() => {
+                                    cell1.style.boxShadow = '';
+                                    cell2.style.boxShadow = '';
+                                }, 1500);
+                                
+                                return;
+                            }
+                        }
+                        
+                        // 检查下方交换
+                        if (row < BOARD_SIZE - 1) {
+                            // 交换
+                            [board[row][col], board[row + 1][col]] = [board[row + 1][col], board[row][col]];
+                            
+                            // 检查是否有匹配
+                            const matches = findMatches();
+                            
+                            // 交换回来
+                            [board[row][col], board[row + 1][col]] = [board[row + 1][col], board[row][col]];
+                            
+                            if (matches.length > 0) {
+                                // 高亮提示的单元格
+                                const cell1 = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                                const cell2 = document.querySelector(`.cell[data-row="${row + 1}"][data-col="${col}"]`);
+                                
+                                cell1.style.boxShadow = '0 0 0 4px #42b883';
+                                cell2.style.boxShadow = '0 0 0 4px #42b883';
+                                
+                                setTimeout(() => {
+                                    cell1.style.boxShadow = '';
+                                    cell2.style.boxShadow = '';
+                                }, 1500);
+                                
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 事件监听
+            restartButton.addEventListener('click', initGame);
+            hintButton.addEventListener('click', showHint);
+            playAgainButton.addEventListener('click', initGame);
+            
+            // 初始化游戏
+            initGame();
+            
+            // 添加得分动画的CSS
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes floatUp {
+                    0% { 
+                        transform: translateY(0); 
+                        opacity: 1;
+                    }
+                    100% { 
+                        transform: translateY(-50px); 
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>
