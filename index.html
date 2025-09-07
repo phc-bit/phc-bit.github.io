@@ -459,31 +459,41 @@
             const musicControl = document.getElementById('music-control');
             let musicPlaying = false;
             
-            // 播放随机消除音效
-            function playRandomEliminateSound() {
-                const randomIndex = Math.floor(Math.random() * eliminateSounds.length);
-                const sound = eliminateSounds[randomIndex];
-                
-                // 重置并播放音效
-                sound.currentTime = 0;
-                sound.play().catch(e => {
-                    console.log("音效播放失败:", e);
-                });
-            }
-            
-            // 控制背景音乐
+            // 修改音乐控制函数
             function toggleBackgroundMusic() {
                 if (musicPlaying) {
                     backgroundMusic.pause();
                     musicControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
                 } else {
-                    backgroundMusic.play().catch(e => {
-                        console.log("背景音乐播放失败:", e);
-                    });
-                    musicControl.innerHTML = '<i class="fas fa-music"></i>';
-                }
-                musicPlaying = !musicPlaying;
-            }
+        // 尝试播放音乐
+        backgroundMusic.play().then(() => {
+            musicControl.innerHTML = '<i class="fas fa-music"></i>';
+        }).catch(e => {
+            console.log("需要用户交互才能播放音乐:", e);
+            // 显示提示信息
+            alert("请点击页面任意位置授权音乐播放");
+        });
+    }
+    musicPlaying = !musicPlaying;
+}
+
+// 添加全局点击事件授权播放
+document.body.addEventListener('click', () => {
+    if (!musicPlaying) {
+        backgroundMusic.play().catch(e => {
+            console.log("用户交互后仍无法播放:", e);
+        });
+    }
+}, { once: true });
+
+// 修改初始化时的音乐播放逻辑
+function initGame() {
+    // ... 其他代码保持不变 ...
+    
+    // 移除自动播放尝试，改为等待用户交互
+    musicPlaying = false;
+    musicControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+}
             
             // 游戏状态
             let board = [];
@@ -1036,5 +1046,6 @@
     </script>
 </body>
 </html>
+
 
 
